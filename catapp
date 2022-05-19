@@ -1,0 +1,43 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/Catalog.php';
+
+if (php_sapi_name() !== 'cli') {
+    exit;
+}
+
+$app = new Catalog();
+
+$action = $argv[1] ?? '';
+$context = $argv[2] ?? '';
+
+switch($action){
+    case 'all':
+        $app->getAllRecords();
+        break;
+    case 'find':
+        if(!empty($context)){
+            $app->getRecord($context);
+        } else {
+            echo "Please provide an id to search.\n";
+        }
+        break;
+    case 'add':
+            $type = readline('Type: ');
+            $data['isbn'] = readline('ISBN: ');
+            $data['title'] = readline('Title: ');
+            $data['author'] = readline('Author: ');
+            while(($name = readline('Additional Data Name:')) !== ''){
+                $data[$name] = readline($name.' Value: ');
+            }
+            $app->addRecord($type, $data);
+        break;
+    case 'help':
+    default:
+        if($action != 'help'){
+            echo "Unknown action.\n";
+        }
+        echo "Usage: \n\thelp - this help\n\tall - list all records\n\tfind <isbn> - find a record by id\n\tadd - add a record\n";
+        break;
+}
