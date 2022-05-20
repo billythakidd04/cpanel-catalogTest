@@ -20,13 +20,11 @@ class Catalog
 		return $records;
 	}
 
-	// TODO add a method to get a specific record from the catalog
 	public function getRecord(string $id)
 	{
 		return Record::getRecord($id);
 	}
 
-	// TODO add a method to add a record to the catalog
 
 	/**
 	 * @throws Exception
@@ -41,7 +39,6 @@ class Catalog
 		return false;
 	}
 
-	// TODO add a method to mark a record as deleted from the catalog
 	public function deleteRecord(string $id): bool
 	{
 		$record = $this->getRecord($id);

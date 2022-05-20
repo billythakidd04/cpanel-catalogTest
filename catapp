@@ -14,13 +14,28 @@ $context = $argv[2] ?? '';
 
 switch($action){
     case 'all':
-        $app->getAllRecords();
+        echo 'Attempting to find all records...' . PHP_EOL. PHP_EOL;
+        $results = $app->getAllRecords();
+        if($results){
+            foreach ($results as $type => $types) {
+                echo 'Printing records for type: ' . $type . PHP_EOL;
+                foreach ($types as $record) {
+                    printRecord($record);
+                }
+            }
+        }
         break;
     case 'find':
         if(!empty($context)){
-            $app->getRecord($context);
+            echo 'Attempting to find record with ISBN: '.$context . PHP_EOL. PHP_EOL;
+            $record = $app->getRecord($context);
+            if($record){
+                printRecord($record);
+            } else {
+                echo 'Record not found.' . PHP_EOL;
+            }
         } else {
-            echo "Please provide an id to search.\n";
+            echo 'Please provide an id to search'.PHP_EOL;
         }
         break;
     case 'add':
@@ -36,8 +51,16 @@ switch($action){
     case 'help':
     default:
         if($action != 'help'){
-            echo "Unknown action.\n";
+            echo "Unknown action.PHP_EOL";
         }
-        echo "Usage: \n\thelp - this help\n\tall - list all records\n\tfind <isbn> - find a record by id\n\tadd - add a record\n";
+        echo "Usage: PHP_EOL\thelp - this helpPHP_EOL\tall - list all recordsPHP_EOL\tfind <isbn> - find a record by idPHP_EOL\tadd - add a recordPHP_EOL";
         break;
+}
+
+function printRecord($record){
+    echo 'Title: '.$record->getTitle() . PHP_EOL;
+    echo 'Author: '.$record->getAuthor() . PHP_EOL;
+    echo 'Created Date: '.$record->getCreatedDate()->format('m/d/Y') . PHP_EOL;
+    echo 'ISBN: '.$record->getIsbn() . PHP_EOL;
+    echo PHP_EOL;
 }
