@@ -3,6 +3,7 @@ require_once 'RecordInterface.php';
 
 class Record implements RecordInterface
 {
+	private const BASE_PATH = './catalog/';
 	private string $isbn;
 	private string $title;
 	private string $author;
@@ -28,10 +29,10 @@ class Record implements RecordInterface
 
 	public function delete(): bool
 	{
-		if (!file_exists("/catalog/$this->type/$this->isbn") && unlink("/catalog/$this->type/$this->isbn")) {
-			return true;
+		if (file_exists(self::BASE_PATH . "$this->type/$this->isbn")){
+			return unlink(self::BASE_PATH . "$this->type/$this->isbn");
 		}
-		return false;
+		return true;
 	}
 
 	public function getISBN(): string
@@ -56,12 +57,16 @@ class Record implements RecordInterface
 
 	public function save()
 	{
-		$file = "/catalog/$this->type/$this->isbn";
+		$file = self::BASE_PATH . $this->type . '/' . $this->isbn;
+		if (!is_dir(self::BASE_PATH . $this->type)) {
+			mkdir(self::BASE_PATH . $this->type, 0777, true);
+		}
+
 		$fp = fopen($file, 'w+');
 		fwrite($fp, "isbn=$this->isbn\n");
 		fwrite($fp, "title=$this->title\n");
 		fwrite($fp, "author=$this->author\n");
-		fwrite($fp, "createdDate={$this->createdDate->format('Y-m-d H:i:s')}\n");
+		fwrite($fp, "createdDate={$this->createdDate->format('c')}\n");
 		foreach ($this->data as $key => $value) {
 			if (in_array($key, ['isbn', 'title', 'author', 'createdDate']) && !empty($value) && is_string($key)) {
 				continue;
@@ -78,21 +83,23 @@ class Record implements RecordInterface
 
 	public static function getRecord(string $id)
 	{
-		if (!is_dir('/catalog')) {
-			mkdir('/catalog');
+		if (!is_dir(self::BASE_PATH)) {
+			return false;
 		}
-		$types = array_diff(scandir('/catalog'), ['.', '..']);
+		$types = array_diff(scandir(self::BASE_PATH), ['.', '..']);
 		if (empty($types)) {
-			echo "No records found";
+			return false;
 		}
 		foreach ($types as $type) {
-			$file = "/catalog/$type/$id";
+			$file = self::BASE_PATH . "$type/$id";
 			if (file_exists($file)) {
 				$fp = fopen($file, 'r');
 				$recordArray = [];
 				foreach (explode("\n", fread($fp, filesize($file))) as $line) {
-					$data = explode('=', $line);
-					$recordArray[$data[0]] = $data[1];
+					if (!empty($line)) {
+						$data = explode('=', $line);
+						$recordArray[$data[0]] = $data[1];
+					}
 				}
 
 				if (self::validateData($recordArray)) {
@@ -130,24 +137,22 @@ class Record implements RecordInterface
 
 	public static function validateData(array &$data)
 	{
-		echo 'Validating data...';
 		$valid = true;
 		$errors = [];
 		// validate the data
 		if (empty($data['isbn'])) {
 			$valid = false;
-			echo 'ISBN is required';
 		}
 		if (empty($data['title'])) {
 			$valid = false;
-			echo 'Title is required';
 		}
 		if (empty($data['author'])) {
 			$valid = false;
-			echo 'Author is required';
 		}
 		if (empty($data['createdDate'])) {
 			$data['createdDate'] = new DateTime();
+		} else if (!$data['createdDate'] instanceof DateTime) {
+			$data['createdDate'] = new DateTime($data['createdDate']);
 		}
 		return $valid;
 	}

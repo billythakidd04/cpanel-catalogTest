@@ -1,5 +1,6 @@
 <?php
 require_once 'Record.php';
+
 // Manage the interface for accessing the catalog database
 class Catalog
 {
@@ -11,7 +12,10 @@ class Catalog
 		$types = $this->getAllTypes();
 		// loop over each type directory
 		foreach ($types as $type) {
-			$records[$type] = $this->getAllRecordsOfType($type);
+			$set = $this->getAllRecordsOfType($type);
+			if ($set) {
+				$records[$type] = $set;
+			}
 		}
 		return $records;
 	}
@@ -30,10 +34,6 @@ class Catalog
 	public function addRecord(string $type, array $data)
 	{
 		if (Record::validateData($data)) {
-			if(!in_array(ucwords($type), $this->getAllTypes())) {
-				mkdir('/catalog/' . preg_replace('/\s/', '_', ucwords($type)));
-			}
-
 			$record = new Record($type, $data);
 			$record->save();
 			return true;
@@ -58,7 +58,7 @@ class Catalog
 	 */
 	public function getAllTypes()
 	{
-		return array_diff(scandir('/catalog'), ['.', '..']);
+		return array_diff(scandir('./catalog'), ['.', '..']);
 	}
 
 	/**
@@ -71,13 +71,15 @@ class Catalog
 	{
 		foreach ($this->getAllTypes() as $recordType) {
 			if ($recordType === ucwords($type)) {
-				$files = array_diff(scandir('/catalog/' . $recordType), ['.', '..']);
+				$files = array_diff(scandir('./catalog/' . $recordType), ['.', '..']);
 				foreach ($files as $file) {
-					$fp = fopen("/catalog/$recordType/$file", 'r');
+					$fp = fopen("./catalog/$recordType/$file", 'r');
 					$recordArray = [];
-					foreach (explode("\n", fread($fp, filesize("/catalog/$recordType/$file"))) as $line) {
-						$data = explode('=', $line);
-						$recordArray[$data[0]] = $data[1];
+					foreach (explode("\n", fread($fp, filesize("./catalog/$recordType/$file"))) as $line) {
+						if (!empty($line)) {
+							$data = explode('=', $line);
+							$recordArray[$data[0]] = $data[1];
+						}
 					}
 					if (Record::validateData($recordArray)) {
 						$record = new Record($recordType, $recordArray);
